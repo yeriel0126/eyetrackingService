@@ -1,0 +1,33 @@
+[
+    {
+      "id": 1,
+      "name": "Fresh Blossom",
+      "brand": "Flora",
+      "gender": "female",
+      "emotion": "energetic",
+      "season": "spring",
+      "time": "day",
+      "image_url": "https://via.placeholder.com/150?text=Fresh+Blossom"
+    },
+    {
+      "id": 2,
+      "name": "Romantic Musk",
+      "brand": "Aroma",
+      "gender": "male",
+      "emotion": "romantic",
+      "season": "winter",
+      "time": "night",
+      "image_url": "https://via.placeholder.com/150?text=Romantic+Musk"
+    },
+    {
+      "id": 3,
+      "name": "Cozy Vanilla",
+      "brand": "ScentCo",
+      "gender": "unisex",
+      "emotion": "cozy",
+      "season": "fall",
+      "time": "night",
+      "image_url": "https://via.placeholder.com/150?text=Cozy+Vanilla"
+    }
+  ]
+  
