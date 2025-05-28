@@ -192,6 +192,8 @@ struct ProfileView: View {
     }
     
     private func deleteProject(_ project: ProjectModel) {
-        projectStore.deleteProject(project)
+        Task {
+            await projectStore.deleteProject(id: project.id)
+        }
     }
 } 

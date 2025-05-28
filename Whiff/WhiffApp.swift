@@ -10,10 +10,13 @@ import SwiftUI
 @main
 struct WhiffApp: App {
     @StateObject private var projectStore = ProjectStore()
+    @StateObject private var authViewModel = AuthViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(projectStore)
+                .environmentObject(authViewModel)
         }
     }
 }

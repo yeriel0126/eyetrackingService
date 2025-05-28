@@ -7,7 +7,7 @@ struct RecommendationCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // 웹 이미지 로딩
-            AsyncImage(url: URL(string: perfume.imageUrl)) { phase in
+            AsyncImage(url: URL(string: perfume.imageURL)) { phase in
                 switch phase {
                 case .success(let image):
                     image
@@ -45,7 +45,7 @@ struct RecommendationCardView: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text(perfume.notes.joined(separator: ", "))
+                Text(perfume.notes.top.joined(separator: ", "))
                     .font(.body)
                     .foregroundColor(.secondary)
             }

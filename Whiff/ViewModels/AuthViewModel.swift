@@ -1,5 +1,6 @@
 import Foundation
 import FirebaseAuth
+import FirebaseCore
 import GoogleSignIn
 import GoogleSignInSwift
 
@@ -23,19 +24,26 @@ class AuthViewModel: ObservableObject {
     
     private func validateToken(_ token: String) async {
         do {
-            // 토큰 유효성 검증 API 호출
             let response: AuthResponse = try await apiClient.request("/auth/validate", method: "POST")
+            if response.token != token {
+                throw APIError.invalidToken
+            }
             self.user = response.user
             self.isAuthenticated = true
         } catch {
-            // 토큰이 유효하지 않으면 삭제
             UserDefaults.standard.removeObject(forKey: "authToken")
             self.user = nil
             self.isAuthenticated = false
+            self.error = error
         }
     }
     
     func signInWithEmail(email: String, password: String) async {
+        guard !email.isEmpty && !password.isEmpty else {
+            self.error = APIError.invalidInput("이메일과 비밀번호를 입력해주세요.")
+            return
+        }
+        
         isLoading = true
         error = nil
         

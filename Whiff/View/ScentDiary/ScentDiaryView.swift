@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct ScentDiaryView: View {
     @StateObject private var viewModel = ScentDiaryViewModel()
@@ -84,17 +85,17 @@ struct ScentDiaryCard: View {
             
             // 향수 정보와 일기 내용
             HStack(spacing: 12) {
-                Image(diary.perfume.imageName)
+                Image(diary.perfumeName)
                     .resizable()
                     .scaledToFill()
                     .frame(width: 60, height: 60)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(diary.perfume.name)
+                    Text(diary.perfumeName)
                         .font(.subheadline)
                         .bold()
-                    Text(diary.perfume.brand)
+                    Text(diary.brand)
                         .font(.caption)
                         .foregroundColor(.gray)
                     Text(diary.content)
@@ -118,7 +119,9 @@ struct ScentDiaryCard: View {
             // 좋아요, 댓글 버튼
             HStack {
                 Button(action: {
-                    viewModel.toggleLike(diary.id)
+                    Task {
+                        await viewModel.toggleLike(diary.id)
+                    }
                 }) {
                     Label("\(diary.likes)", systemImage: viewModel.isLiked(diary.id) ? "heart.fill" : "heart")
                         .foregroundColor(viewModel.isLiked(diary.id) ? .red : .gray)
@@ -168,22 +171,19 @@ struct ScentDiaryDetailView: View {
                     
                     // 향수 정보
                     HStack(spacing: 16) {
-                        Image(diary.perfume.imageName)
+                        Image(diary.perfumeName)
                             .resizable()
                             .scaledToFill()
                             .frame(width: 100, height: 100)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(diary.perfume.name)
+                            Text(diary.perfumeName)
                                 .font(.title3)
                                 .bold()
-                            Text(diary.perfume.brand)
+                            Text(diary.brand)
                                 .font(.subheadline)
                                 .foregroundColor(.gray)
-                            Text(diary.perfume.description)
-                                .font(.body)
-                                .foregroundColor(.secondary)
                         }
                     }
                     
@@ -215,7 +215,9 @@ struct ScentDiaryDetailView: View {
                     VStack(spacing: 16) {
                         HStack {
                             Button(action: {
-                                viewModel.toggleLike(diary.id)
+                                Task {
+                                    await viewModel.toggleLike(diary.id)
+                                }
                             }) {
                                 Label("\(diary.likes)", systemImage: viewModel.isLiked(diary.id) ? "heart.fill" : "heart")
                                     .foregroundColor(viewModel.isLiked(diary.id) ? .red : .gray)
@@ -258,73 +260,6 @@ struct ScentDiaryDetailView: View {
                         Image(systemName: "square.and.arrow.up")
                     }
                 }
-            }
-        }
-    }
-}
-
-struct NewScentDiaryView: View {
-    @Environment(\.dismiss) private var dismiss
-    @State private var selectedPerfume: Perfume?
-    @State private var content: String = ""
-    @State private var tags: [String] = []
-    @State private var showingPerfumePicker = false
-    
-    var body: some View {
-        NavigationView {
-            Form {
-                Section(header: Text("향수 선택")) {
-                    if let perfume = selectedPerfume {
-                        HStack {
-                            Image(perfume.imageName)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 50, height: 50)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            
-                            VStack(alignment: .leading) {
-                                Text(perfume.name)
-                                    .font(.headline)
-                                Text(perfume.brand)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                    }
-                    
-                    Button(action: {
-                        showingPerfumePicker = true
-                    }) {
-                        Text(selectedPerfume == nil ? "향수 선택하기" : "향수 변경하기")
-                    }
-                }
-                
-                Section(header: Text("시향 일기")) {
-                    TextEditor(text: $content)
-                        .frame(height: 200)
-                }
-                
-                Section(header: Text("태그")) {
-                    TextField("태그 입력 (예: #신나는 #여름)", text: .constant(""))
-                }
-            }
-            .navigationTitle("새로운 시향 일기")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("취소") {
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("저장") {
-                        // TODO: 저장 로직 구현
-                        dismiss()
-                    }
-                }
-            }
-            .sheet(isPresented: $showingPerfumePicker) {
-                PerfumePickerView(selectedPerfume: $selectedPerfume)
             }
         }
     }
@@ -373,5 +308,11 @@ struct PerfumePickerView: View {
                 }
             }
         }
+    }
+}
+
+struct ScentDiaryView_Previews: PreviewProvider {
+    static var previews: some View {
+        ScentDiaryView()
     }
 } 

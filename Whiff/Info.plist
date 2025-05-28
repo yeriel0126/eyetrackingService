@@ -17,5 +17,7 @@
 	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
+	<key>API_BASE_URL</key>
+	<string>https://perfume-recommendation-api-1.onrender.com</string>
 </dict>
 </plist>

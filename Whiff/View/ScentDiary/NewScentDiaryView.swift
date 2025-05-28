@@ -1,133 +1,83 @@
 import SwiftUI
 import PhotosUI
 
+// MARK: - Store
+class ScentDiaryStore: ObservableObject {
+    @Published var diaries: [ScentDiaryModel] = []
+    
+    func saveDiary(_ diary: ScentDiaryModel) async throws {
+        // TODO: 실제 저장 로직 구현
+    }
+}
+
+// MARK: - Views
 struct NewScentDiaryView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = NewScentDiaryViewModel()
+    @State private var selectedPerfume: Perfume?
+    @State private var content: String = ""
+    @State private var tags: [String] = []
     @State private var showingPerfumePicker = false
     @State private var showingImagePicker = false
-    @State private var showingPerfumeDetail = false
+    @State private var showingAlert = false
+    @State private var alertMessage = ""
     
     var body: some View {
         NavigationView {
             Form {
-                // 향수 선택 섹션
-                Section(header: Text("향수 (선택사항)")) {
-                    if let perfume = viewModel.selectedPerfume {
-                        Button(action: {
-                            showingPerfumeDetail = true
-                        }) {
-                            HStack {
-                                Image(perfume.imageName)
+                Section(header: Text("향수 선택")) {
+                    if let perfume = selectedPerfume {
+                        HStack {
+                            AsyncImage(url: URL(string: perfume.imageURL)) { image in
+                                image
                                     .resizable()
                                     .scaledToFill()
-                                    .frame(width: 50, height: 50)
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                                
-                                VStack(alignment: .leading) {
-                                    Text(perfume.name)
-                                        .font(.headline)
-                                    Text(perfume.brand)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gray)
-                                }
-                                
-                                Spacer()
-                                
-                                Image(systemName: "chevron.right")
+                            } placeholder: {
+                                Color.gray
+                            }
+                            .frame(width: 50, height: 50)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
+                            
+                            VStack(alignment: .leading) {
+                                Text(perfume.name)
+                                    .font(.headline)
+                                Text(perfume.brand)
+                                    .font(.subheadline)
                                     .foregroundColor(.gray)
                             }
                         }
-                        
-                        Button(action: {
-                            viewModel.selectedPerfume = nil
-                        }) {
-                            Text("향수 제거하기")
-                                .foregroundColor(.red)
-                        }
-                    } else {
-                        Button(action: {
-                            showingPerfumePicker = true
-                        }) {
-                            HStack {
-                                Image(systemName: "plus.circle")
-                                Text("향수 추가하기")
-                            }
-                        }
+                    }
+                    
+                    Button(action: {
+                        showingPerfumePicker = true
+                    }) {
+                        Text(selectedPerfume == nil ? "향수 선택하기" : "향수 변경하기")
                     }
                 }
                 
-                // 이미지 선택 섹션
-                Section(header: Text("이미지")) {
-                    if let selectedImage = viewModel.selectedImage {
-                        HStack {
-                            Image(uiImage: selectedImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 100, height: 100)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
-                            
-                            Spacer()
-                            
-                            Button(action: {
-                                viewModel.selectedImage = nil
-                            }) {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundColor(.gray)
-                            }
-                        }
-                    } else {
-                        Button(action: {
-                            showingImagePicker = true
-                        }) {
-                            HStack {
-                                Image(systemName: "photo")
-                                Text("이미지 추가하기")
-                            }
-                        }
-                    }
-                }
-                
-                // 일기 내용 섹션
                 Section(header: Text("시향 일기")) {
-                    TextEditor(text: $viewModel.content)
+                    TextEditor(text: $content)
                         .frame(height: 200)
                 }
                 
-                // 태그 섹션
-                Section(header: Text("태그 (선택사항)")) {
-                    TextField("태그 입력 (예: #신나는 #여름)", text: $viewModel.tagInput)
-                        .onSubmit {
-                            viewModel.addTag()
-                        }
+                Section(header: Text("태그")) {
+                    TextField("태그 입력 (예: #신나는 #여름)", text: .constant(""))
+                }
+                
+                Section(header: Text("이미지")) {
+                    if let image = viewModel.selectedImage {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 200)
+                    }
                     
-                    if !viewModel.tags.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
-                                ForEach(viewModel.tags, id: \.self) { tag in
-                                    HStack {
-                                        Text("#\(tag)")
-                                            .foregroundColor(.blue)
-                                        
-                                        Button(action: {
-                                            viewModel.removeTag(tag)
-                                        }) {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .foregroundColor(.gray)
-                                        }
-                                    }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.blue.opacity(0.1))
-                                    .cornerRadius(12)
-                                }
-                            }
-                        }
+                    Button(viewModel.selectedImage == nil ? "이미지 추가하기" : "이미지 변경하기") {
+                        showingImagePicker = true
                     }
                 }
                 
-                // 공개 설정 섹션
-                Section(header: Text("공개 설정")) {
+                Section {
                     Toggle("공개", isOn: $viewModel.isPublic)
                 }
             }
@@ -141,62 +91,43 @@ struct NewScentDiaryView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("저장") {
-                        viewModel.saveDiary()
-                        dismiss()
+                        Task {
+                            do {
+                                try await viewModel.saveDiary()
+                                dismiss()
+                            } catch {
+                                alertMessage = error.localizedDescription
+                                showingAlert = true
+                            }
+                        }
                     }
-                    .disabled(viewModel.content.isEmpty)
+                    .disabled(viewModel.isLoading)
                 }
             }
             .sheet(isPresented: $showingPerfumePicker) {
-                PerfumePickerView(selectedPerfume: $viewModel.selectedPerfume)
+                PerfumePickerView(selectedPerfume: $selectedPerfume)
             }
             .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(image: $viewModel.selectedImage)
+                ImagePicker(selectedImage: $viewModel.selectedImage)
             }
-            .sheet(isPresented: $showingPerfumeDetail) {
-                if let perfume = viewModel.selectedPerfume {
-                    PerfumeDetailView(perfume: perfume)
-                }
+            .alert("오류", isPresented: $showingAlert) {
+                Button("확인", role: .cancel) { }
+            } message: {
+                Text(alertMessage)
             }
         }
     }
 }
 
-class NewScentDiaryViewModel: ObservableObject {
-    @Published var selectedPerfume: Perfume?
-    @Published var selectedImage: UIImage?
-    @Published var content: String = ""
-    @Published var tagInput: String = ""
-    @Published var tags: [String] = []
-    @Published var isPublic: Bool = true
-    
-    func addTag() {
-        let trimmedTag = tagInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !trimmedTag.isEmpty && !tags.contains(trimmedTag) {
-            tags.append(trimmedTag)
-            tagInput = ""
-        }
-    }
-    
-    func removeTag(_ tag: String) {
-        tags.removeAll { $0 == tag }
-    }
-    
-    func saveDiary() {
-        // TODO: 실제 저장 로직 구현
-        print("일기 저장: \(content)")
-        print("태그: \(tags)")
-        print("공개 여부: \(isPublic)")
-    }
-}
-
+// MARK: - Supporting Views
 struct ImagePicker: UIViewControllerRepresentable {
-    @Binding var image: UIImage?
-    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedImage: UIImage?
+    @Environment(\.presentationMode) private var presentationMode
     
     func makeUIViewController(context: Context) -> PHPickerViewController {
         var config = PHPickerConfiguration()
         config.filter = .images
+        config.selectionLimit = 1
         let picker = PHPickerViewController(configuration: config)
         picker.delegate = context.coordinator
         return picker
@@ -216,17 +147,90 @@ struct ImagePicker: UIViewControllerRepresentable {
         }
         
         func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
-            parent.dismiss()
+            parent.presentationMode.wrappedValue.dismiss()
             
             guard let provider = results.first?.itemProvider else { return }
             
             if provider.canLoadObject(ofClass: UIImage.self) {
                 provider.loadObject(ofClass: UIImage.self) { image, _ in
                     DispatchQueue.main.async {
-                        self.parent.image = image as? UIImage
+                        self.parent.selectedImage = image as? UIImage
                     }
                 }
             }
         }
+    }
+}
+
+struct TagView: View {
+    let tag: String
+    let onRemove: () -> Void
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(tag)
+                .font(.caption)
+            
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.gray)
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color.gray.opacity(0.1))
+        .cornerRadius(8)
+    }
+}
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        return layout(sizes: sizes, proposal: proposal).size
+    }
+    
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let offsets = layout(sizes: sizes, proposal: proposal).offsets
+        
+        for (offset, subview) in zip(offsets, subviews) {
+            subview.place(at: CGPoint(x: bounds.minX + offset.x, y: bounds.minY + offset.y), proposal: .unspecified)
+        }
+    }
+    
+    private func layout(sizes: [CGSize], proposal: ProposedViewSize) -> (offsets: [CGPoint], size: CGSize) {
+        guard let containerWidth = proposal.width else {
+            return (sizes.map { _ in .zero }, .zero)
+        }
+        
+        var offsets: [CGPoint] = []
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var maxY: CGFloat = 0
+        var rowHeight: CGFloat = 0
+        
+        for size in sizes {
+            if currentX + size.width > containerWidth {
+                currentX = 0
+                currentY += rowHeight + spacing
+                rowHeight = 0
+            }
+            
+            offsets.append(CGPoint(x: currentX, y: currentY))
+            currentX += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
+            maxY = max(maxY, currentY + rowHeight)
+        }
+        
+        return (offsets, CGSize(width: containerWidth, height: maxY))
+    }
+}
+
+// MARK: - Preview
+struct NewScentDiaryView_Previews: PreviewProvider {
+    static var previews: some View {
+        NewScentDiaryView()
     }
 } 

@@ -6,7 +6,7 @@
 //
 import Foundation
 
-struct Notes: Codable {
+struct PerfumeNotes: Codable {
     let top: [String]
     let middle: [String]
     let base: [String]
