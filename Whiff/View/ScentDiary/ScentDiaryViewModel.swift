@@ -1,17 +1,21 @@
 import Foundation
 import SwiftUI
 
+@MainActor
 class ScentDiaryViewModel: ObservableObject {
-    @Published var diaries: [ScentDiaryModel] = []
+    @Published var diaries: [ScentDiary] = []
     @Published var isLoading = false
     @Published var error: Error?
+    
+    private let apiClient = APIClient.shared
     
     // 좋아요 상태를 저장하는 딕셔너리
     @Published private var likedDiaries: Set<String> = []
     
     init() {
-        // TODO: 실제 데이터 로딩으로 대체
-        loadMockData()
+        Task {
+            await fetchDiaries()
+        }
     }
     
     // 시간순으로 정렬된 일기 목록
@@ -30,13 +34,13 @@ class ScentDiaryViewModel: ObservableObject {
             likedDiaries.remove(diaryId)
             // 좋아요 수 감소
             if let index = diaries.firstIndex(where: { $0.id == diaryId }) {
-                diaries[index].likes -= 1
+                diaries[index].likeCount -= 1
             }
         } else {
             likedDiaries.insert(diaryId)
             // 좋아요 수 증가
             if let index = diaries.firstIndex(where: { $0.id == diaryId }) {
-                diaries[index].likes += 1
+                diaries[index].likeCount += 1
             }
         }
     }
@@ -89,5 +93,44 @@ class ScentDiaryViewModel: ObservableObject {
         ]
         
         self.diaries = mockDiaries
+    }
+    
+    func fetchDiaries() async {
+        isLoading = true
+        error = nil
+        
+        do {
+            diaries = try await apiClient.getScentDiaries()
+        } catch {
+            self.error = error
+        }
+        
+        isLoading = false
+    }
+    
+    func createDiary(_ diary: ScentDiary) async {
+        isLoading = true
+        error = nil
+        
+        do {
+            let createdDiary = try await apiClient.createScentDiary(diary)
+            diaries.insert(createdDiary, at: 0)
+        } catch {
+            self.error = error
+        }
+        
+        isLoading = false
+    }
+    
+    func toggleLike(for diary: ScentDiary) async {
+        do {
+            let isLiked = try await apiClient.toggleLike(diaryId: diary.id)
+            if let index = diaries.firstIndex(where: { $0.id == diary.id }) {
+                diaries[index].isLiked = isLiked
+                diaries[index].likeCount += isLiked ? 1 : -1
+            }
+        } catch {
+            self.error = error
+        }
     }
 } 

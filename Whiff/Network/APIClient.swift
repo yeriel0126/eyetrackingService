@@ -91,6 +91,21 @@ class APIClient {
     func getRecommendations(projectId: String) async throws -> [Perfume] {
         return try await request("/projects/\(projectId)/recommendations")
     }
+    
+    // MARK: - Scent Diary APIs
+    func getScentDiaries() async throws -> [ScentDiary] {
+        return try await request("/diaries")
+    }
+    
+    func createScentDiary(_ diary: ScentDiary) async throws -> ScentDiary {
+        let body = try JSONEncoder().encode(diary)
+        return try await request("/diaries", method: "POST", body: body)
+    }
+    
+    func toggleLike(diaryId: String) async throws -> Bool {
+        let response: [String: Bool] = try await request("/diaries/\(diaryId)/like", method: "POST")
+        return response["isLiked"] ?? false
+    }
 }
 
 // MARK: - Request/Response Models
