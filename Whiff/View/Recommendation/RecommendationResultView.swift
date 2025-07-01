@@ -6,17 +6,22 @@ struct RecommendationResultView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            RecommendationContentView(
-                project: project,
-                recommendations: $viewModel.recommendations,
-                onDismiss: { dismiss() }
-            )
-            .task {
+        RecommendationContentView(
+            project: project,
+            recommendations: $viewModel.recommendations,
+            onDismiss: { dismiss() }
+        )
+        .task {
+            // project.recommendations가 이미 있으면 API 호출 안하고 바로 사용
+            if !project.recommendations.isEmpty {
+                print("✅ Using pre-loaded recommendations: \(project.recommendations.count) items")
+                viewModel.recommendations = project.recommendations
+            } else {
+                print("🔄 Fetching recommendations from API for project: \(project.id)")
                 do {
                     try await viewModel.getRecommendations(projectId: project.id)
                 } catch {
-                    print("Error fetching recommendations: \(error)")
+                    print("❌ Error fetching recommendations: \(error)")
                 }
             }
         }
@@ -70,68 +75,82 @@ private struct RecommendationListView: View {
     var body: some View {
         LazyVStack(spacing: 16) {
             ForEach(recommendations) { recommendation in
-                PerfumeCard(perfume: Perfume(
-                    id: recommendation.id ?? "",
-                    name: recommendation.name,
-                    brand: recommendation.brand,
-                    imageURL: recommendation.imageUrl ?? "",
-                    price: 0,
-                    description: recommendation.notes ?? "",
-                    notes: PerfumeNotes(top: [], middle: [], base: []),
-                    rating: recommendation.score ?? 0,
-                    emotionTags: recommendation.emotionTags ?? [],
-                    similarity: Double(recommendation.similarity ?? "0") ?? 0
-                ))
-                .onTapGesture {
-                    // TODO: 향수 상세 페이지로 이동
-                }
+                RecommendationCard(recommendation: recommendation)
+                    .onTapGesture {
+                        // TODO: 향수 상세 페이지로 이동
+                    }
             }
         }
         .padding(.horizontal)
     }
 }
 
-struct PerfumeCard: View {
-    let perfume: Perfume
+// MARK: - 추천 카드 컴포넌트
+private struct RecommendationCard: View {
+    let recommendation: PerfumeRecommendation
     
     var body: some View {
-        HStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 12) {
             // 향수 이미지
-            AsyncImage(url: URL(string: perfume.imageURL)) { image in
+            AsyncImage(url: URL(string: recommendation.imageUrl ?? "")) { image in
                 image
                     .resizable()
                     .scaledToFill()
             } placeholder: {
-                Color.gray.opacity(0.3)
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(0.2))
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(.gray)
+                    )
             }
-            .frame(width: 80, height: 80)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .frame(height: 140)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
             
-            // 향수 정보
-            VStack(alignment: .leading, spacing: 4) {
-                Text(perfume.name)
-                    .font(.headline)
-                
-                Text(perfume.brand)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(recommendation.name)
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .bold()
+                    .lineLimit(2)
+                    .foregroundColor(.primary)
                 
-                Text(perfume.description)
+                Text(recommendation.brand)
                     .font(.caption)
                     .foregroundColor(.gray)
-                    .lineLimit(2)
+                
+                if let score = recommendation.score {
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.pink)
+                            .font(.caption)
+                        
+                        Text("매치도 \(String(format: "%.1f", score * 100))%")
+                            .font(.caption)
+                            .foregroundColor(.pink)
+                    }
+                }
+                
+                // 감정 태그
+                if let emotionTags = recommendation.emotionTags, !emotionTags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(emotionTags.prefix(3), id: \.self) { tag in
+                                Text(tag)
+                                    .font(.caption2)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.purple.opacity(0.1))
+                                    .foregroundColor(.purple)
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                }
             }
-            
-            Spacer()
-            
-            // 화살표 아이콘
-            Image(systemName: "chevron.right")
-                .foregroundColor(.gray)
         }
-        .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(12)
-        .shadow(radius: 2)
+        .padding(12)
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
     }
 }
 
@@ -152,4 +171,4 @@ struct RecommendationResultView_Previews: PreviewProvider {
             isFavorite: false
         ))
     }
-}
+} 

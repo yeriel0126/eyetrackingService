@@ -17,7 +17,10 @@ struct WeatherSelectionView: View {
             options: weathers,
             selectedOption: $selectedWeather,
             title: "어떤 날씨에 어울리는 향이 좋으신가요?",
-            onNext: onNext,
+            onNext: {
+                print("🌤️ 날씨 선택 완료: \(selectedWeather ?? "nil")")
+                onNext()
+            },
             onBack: onBack
         )
     }

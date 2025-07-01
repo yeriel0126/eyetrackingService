@@ -2,22 +2,29 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>API_BASE_URL</key>
+	<string>https://whiff-api-9nd8.onrender.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>goolge-login</string>
+			<string>com.sinhuiyeong.Whiff</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.455130658093-1cf5muvdb1ig4ttilb75pdqre1gdpchi</string>
+				<string>com.googleusercontent.apps.494222107612-huk581dplo8ijc6r0fs8i578nb9cs1pm</string>
 			</array>
 		</dict>
 	</array>
+	<key>GIDClientID</key>
+	<string>494222107612-huk581dplo8ijc6r0fs8i578nb9cs1pm.apps.googleusercontent.com</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>google</string>
+		<string>com.googleusercontent.apps.494222107612-huk581dplo8ijc6r0fs8i578nb9cs1pm</string>
+	</array>
 	<key>UILaunchScreen</key>
 	<dict/>
-	<key>API_BASE_URL</key>
-	<string>https://perfume-recommendation-api-1.onrender.com</string>
 </dict>
 </plist>

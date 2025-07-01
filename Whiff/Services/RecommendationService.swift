@@ -7,10 +7,24 @@ class RecommendationService {
     private init() {}
     
     func getRecommendations(projectId: String) async throws -> [PerfumeRecommendation] {
-        return try await networkManager.getRecommendations(projectId: projectId)
+        // ProjectId로부터 추천을 받아오는 로직이 필요하다면 구현 필요
+        // 현재는 일반적인 향수 추천을 반환
+        let perfumeResponses = try await networkManager.fetchPerfumes()
+        return perfumeResponses.map { perfume in
+            PerfumeRecommendation(
+                id: perfume.id,
+                name: perfume.name,
+                brand: perfume.brand,
+                notes: "Top: \(perfume.notes.top.joined(separator: ", "))",
+                imageUrl: perfume.imageURL,
+                score: perfume.rating,
+                emotionTags: perfume.emotionTags,
+                similarity: String(format: "%.2f", perfume.similarity)
+            )
+        }
     }
     
-    func saveRecommendations(userId: String, recommendRound: Int, recommendations: [PerfumeScore]) async throws {
+    func saveRecommendations(userId: String, recommendRound: Int, recommendations: [PerfumeRecommendationItem]) async throws {
         try await networkManager.saveRecommendations(
             userId: userId,
             recommendRound: recommendRound,

@@ -8,15 +8,10 @@ import SwiftUI
 import Foundation
 
 struct ProjectDetailView: View {
-    let project: ProjectModel
+    let project: Project
     @State private var showingAddNote = false
-    @State private var selectedPerfume: PerfumeRecommendation?
-    @State private var isFavorite: Bool
-    
-    init(project: ProjectModel) {
-        self.project = project
-        _isFavorite = State(initialValue: project.isFavorite)
-    }
+    @State private var selectedPerfume: Perfume?
+    @EnvironmentObject var projectStore: ProjectStore
     
     var body: some View {
         ScrollView {
@@ -31,114 +26,396 @@ struct ProjectDetailView: View {
                         Spacer()
                         
                         Button(action: {
-                            isFavorite.toggle()
-                            var updatedProject = project
-                            updatedProject.isFavorite = isFavorite
-                            ProjectManager.shared.updateProject(updatedProject)
+                            // TODO: 즐겨찾기 기능 추가
                         }) {
-                            Image(systemName: isFavorite ? "star.fill" : "star")
-                                .foregroundColor(isFavorite ? .yellow : .gray)
+                            Image(systemName: "star")
+                                .foregroundColor(.gray)
                         }
                     }
                     
-                    Text("Created: \(project.createdAt.formatted())")
-                        .font(.subheadline)
-                        .foregroundColor(.gray)
+                    HStack(spacing: 16) {
+                        Text("생성일: \(project.createdAt.formatted(date: .abbreviated, time: .omitted))")
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                        
+                        Text("\(project.recommendations.count)개 향수")
+                            .font(.subheadline)
+                            .foregroundColor(.accentColor)
+                    }
+                    
+                    // 태그들
+                    if !project.tags.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(project.tags, id: \.self) { tag in
+                                    Text(tag)
+                                        .font(.caption)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.accentColor.opacity(0.1))
+                                        .foregroundColor(.accentColor)
+                                        .cornerRadius(16)
+                                }
+                            }
+                            .padding(.horizontal, 1)
+                        }
+                    }
                 }
                 .padding(.horizontal)
                 
-                // 추천 향수 목록
+                // 향수 추천 목록
                 VStack(alignment: .leading, spacing: 16) {
-                    Text("추천 향수")
-                        .font(.headline)
-                        .padding(.horizontal)
-                    
-                    ForEach(project.recommendations) { perfume in
-                        PerfumeRecommendationCard(perfume: perfume)
-                            .onTapGesture {
-                                selectedPerfume = perfume
-                            }
+                    HStack {
+                        Text("추천 향수")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        Text("총 \(project.recommendations.count)개")
+                            .font(.caption)
+                            .foregroundColor(.gray)
                     }
+                    .padding(.horizontal)
+                    
+                    LazyVStack(spacing: 16) {
+                        ForEach(project.recommendations, id: \.id) { perfume in
+                            PerfumeDetailCard(perfume: perfume)
+                                .onTapGesture {
+                                    selectedPerfume = perfume
+                                }
+                        }
+                    }
+                    .padding(.horizontal)
                 }
+                
+                // 삭제 버튼
+                Button(action: {
+                    projectStore.removeProject(project)
+                }) {
+                    HStack {
+                        Image(systemName: "trash")
+                        Text("이 프로젝트 삭제")
+                    }
+                    .font(.subheadline)
+                    .foregroundColor(.red)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 40)
             }
             .padding(.vertical)
         }
+        .navigationTitle("추천 상세")
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedPerfume) { perfume in
-            PerfumeDetailView(perfume: perfume)
-        }
-        .onAppear {
-            // 프로젝트 데이터 로드
-            if let savedProject = ProjectManager.shared.getProject(id: project.id) {
-                isFavorite = savedProject.isFavorite
-            }
+            PerfumeSheetView(perfume: perfume)
         }
     }
 }
 
-struct PerfumeRecommendationCard: View {
-    let perfume: PerfumeRecommendation
+// MARK: - 향수 상세 카드
+struct PerfumeDetailCard: View {
+    let perfume: Perfume
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(perfume.name)
-                .font(.headline)
-            
-            Text(perfume.brand)
-                .font(.subheadline)
-                .foregroundColor(.gray)
-            
-            if let notes = perfume.notes {
-                Text(notes)
-                    .font(.caption)
-                    .foregroundColor(.gray)
+        HStack(spacing: 16) {
+            // 향수 이미지
+            AsyncImage(url: URL(string: perfume.imageURL)) { image in
+                image
+                    .resizable()
+                    .scaledToFill()
+            } placeholder: {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.gray.opacity(0.2))
+                    .overlay(
+                        Image(systemName: "photo")
+                            .foregroundColor(.gray)
+                    )
             }
+            .frame(width: 80, height: 100)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            
+            // 향수 정보
+            VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(perfume.name)
+                        .font(.headline)
+                        .bold()
+                    
+                    Text(perfume.brand)
+                        .font(.subheadline)
+                        .foregroundColor(.accentColor)
+                }
+                
+                // 매치 점수
+                if perfume.similarity > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "heart.fill")
+                            .foregroundColor(.pink)
+                            .font(.caption)
+                        
+                        Text("매치도 \(String(format: "%.1f", perfume.similarity * 100))%")
+                            .font(.caption)
+                            .foregroundColor(.pink)
+                    }
+                }
+                
+                // 감정 태그
+                if !perfume.emotionTags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 6) {
+                            ForEach(perfume.emotionTags.prefix(3), id: \.self) { tag in
+                                Text(tag)
+                                    .font(.caption2)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color.purple.opacity(0.1))
+                                    .foregroundColor(.purple)
+                                    .cornerRadius(8)
+                            }
+                        }
+                    }
+                }
+                
+                Spacer()
+            }
+            
+            Spacer()
+            
+            // 상세보기 버튼
+            Image(systemName: "chevron.right")
+                .foregroundColor(.gray)
         }
         .padding()
-        .background(Color(.systemBackground))
-        .cornerRadius(10)
-        .shadow(radius: 2)
-        .padding(.horizontal)
+        .background(Color(.systemGray6))
+        .cornerRadius(16)
+    }
+}
+
+// MARK: - 향수 시트 뷰
+struct PerfumeSheetView: View {
+    let perfume: Perfume
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // 향수 이미지와 기본 정보
+                    VStack(spacing: 16) {
+                        AsyncImage(url: URL(string: perfume.imageURL)) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } placeholder: {
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.gray.opacity(0.2))
+                                .overlay(
+                                    Image(systemName: "photo")
+                                        .font(.largeTitle)
+                                        .foregroundColor(.gray)
+                                )
+                        }
+                        .frame(height: 200)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                        
+                        VStack(spacing: 8) {
+                            Text(perfume.name)
+                                .font(.title2)
+                                .bold()
+                                .multilineTextAlignment(.center)
+                            
+                            Text(perfume.brand)
+                                .font(.headline)
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                    
+                    // 매치 점수
+                    if perfume.similarity > 0 {
+                        HStack {
+                            Image(systemName: "heart.fill")
+                                .foregroundColor(.pink)
+                            
+                            Text("매치도")
+                                .font(.subheadline)
+                                .bold()
+                            
+                            Spacer()
+                            
+                            Text("\(String(format: "%.1f", perfume.similarity * 100))%")
+                                .font(.subheadline)
+                                .bold()
+                                .foregroundColor(.pink)
+                        }
+                        .padding()
+                        .background(Color.pink.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+                    
+                    // 감정 태그
+                    if !perfume.emotionTags.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("감정 특성")
+                                .font(.headline)
+                                .bold()
+                            
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 8) {
+                                ForEach(perfume.emotionTags, id: \.self) { tag in
+                                    Text(tag)
+                                        .font(.caption)
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.purple.opacity(0.1))
+                                        .foregroundColor(.purple)
+                                        .cornerRadius(12)
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                    }
+                    
+                    // 향수 설명
+                    if !perfume.description.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("AI 추천 분석")
+                                .font(.headline)
+                                .bold()
+                            
+                            Text(perfume.description)
+                                .font(.body)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                    }
+                    
+                    // 향 노트 (있을 경우)
+                    if !perfume.notes.top.isEmpty || !perfume.notes.middle.isEmpty || !perfume.notes.base.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("향 노트")
+                                .font(.headline)
+                                .bold()
+                            
+                            VStack(alignment: .leading, spacing: 8) {
+                                if !perfume.notes.top.isEmpty {
+                                    HStack {
+                                        Text("Top:")
+                                            .font(.subheadline)
+                                            .bold()
+                                            .foregroundColor(.blue)
+                                        Text(perfume.notes.top.joined(separator: ", "))
+                                            .font(.subheadline)
+                                    }
+                                }
+                                
+                                if !perfume.notes.middle.isEmpty {
+                                    HStack {
+                                        Text("Middle:")
+                                            .font(.subheadline)
+                                            .bold()
+                                            .foregroundColor(.blue)
+                                        Text(perfume.notes.middle.joined(separator: ", "))
+                                            .font(.subheadline)
+                                    }
+                                }
+                                
+                                if !perfume.notes.base.isEmpty {
+                                    HStack {
+                                        Text("Base:")
+                                            .font(.subheadline)
+                                            .bold()
+                                            .foregroundColor(.blue)
+                                        Text(perfume.notes.base.joined(separator: ", "))
+                                            .font(.subheadline)
+                                    }
+                                }
+                            }
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                    }
+                }
+                .padding()
+            }
+            .navigationTitle("향수 상세")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("닫기") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }
 
 struct ProjectDetailView_Previews: PreviewProvider {
     static var previews: some View {
-        let sampleRecommendations = [
-            PerfumeRecommendation(
+        let samplePerfumes = [
+            Perfume(
                 id: "1",
                 name: "Sample Perfume 1",
                 brand: "Sample Brand",
-                notes: "Top: Bergamot, Lemon\nMiddle: Jasmine, Rose\nBase: Sandalwood, Musk",
-                imageUrl: nil,
-                score: 0.85,
+                imageURL: "https://picsum.photos/200/300?random=1",
+                price: 120000,
+                description: "신선하고 상쾌한 시트러스 향수입니다. 레몬과 베르가모트의 톱 노트가 자스민과 로즈의 미들 노트와 조화를 이루며, 샌달우드와 머스크의 베이스 노트로 마무리됩니다.",
+                notes: PerfumeNotes(
+                    top: ["Bergamot", "Lemon"],
+                    middle: ["Jasmine", "Rose"],
+                    base: ["Sandalwood", "Musk"]
+                ),
+                rating: 4.5,
                 emotionTags: ["신나는", "상쾌한", "시트러스"],
-                similarity: "0.85"
+                similarity: 0.85
             ),
-            PerfumeRecommendation(
+            Perfume(
                 id: "2",
                 name: "Sample Perfume 2",
                 brand: "Another Brand",
-                notes: "Top: Orange, Grapefruit\nMiddle: Lavender, Rose\nBase: Vanilla, Amber",
-                imageUrl: nil,
-                score: 0.75,
+                imageURL: "https://picsum.photos/200/300?random=2",
+                price: 95000,
+                description: "차분하고 로맨틱한 플로럴 우드 향수입니다. 오렌지와 자몽의 생동감 있는 시작과 라벤더와 로즈의 우아한 중간 향, 바닐라와 앰버의 따뜻한 마무리가 특징입니다.",
+                notes: PerfumeNotes(
+                    top: ["Orange", "Grapefruit"],
+                    middle: ["Lavender", "Rose"],
+                    base: ["Vanilla", "Amber"]
+                ),
+                rating: 4.2,
                 emotionTags: ["차분한", "로맨틱한", "우드"],
-                similarity: "0.75"
+                similarity: 0.75
             )
         ]
         
-        let now = Date()
-        
-        return ProjectDetailView(project: ProjectModel(
-            id: "1",
+        return ProjectDetailView(project: Project(
+            id: UUID(),
             name: "Sample Project",
-            userId: "user1",
-            preferences: [],
-            recommendations: sampleRecommendations,
-            createdAt: now,
-            updatedAt: now,
-            tags: ["sample", "test"],
-            isFavorite: false
+            recommendations: samplePerfumes,
+            emotionSummary: "테스트용 감정 분석 요약입니다.",
+            createdDate: Date(),
+            userPreferences: PerfumePreferences(
+                gender: "Female",
+                seasonTags: "Spring",
+                timeTags: "Day",
+                desiredImpression: "Fresh, Confident",
+                activity: "Casual",
+                weather: "Sunny"
+            ),
+            userNoteRatings: ["citrus": 5, "floral": 4, "woody": 3]
         ))
+        .environmentObject(ProjectStore())
     }
 }
 

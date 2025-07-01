@@ -6,33 +6,59 @@ struct ProjectCreateView: View {
     @State private var projectName: String = ""
     @State private var goNext: Bool = false
     
+    let selectedModel: RecommendationModelType
+    
+    init(selectedModel: RecommendationModelType = .standard) {
+        self.selectedModel = selectedModel
+    }
+    
     var body: some View {
-        VStack(spacing: 20) {
-            Text("프로젝트 이름을 입력해주세요")
-                .font(.title2)
-                .fontWeight(.bold)
+        VStack(spacing: 24) {
+            VStack(spacing: 16) {
+                Text("프로젝트 이름을 입력해주세요")
+                    .font(.title2)
+                    .fontWeight(.bold)
+                
+                Text("선택된 모델: \(selectedModel.rawValue)")
+                    .font(.subheadline)
+                    .foregroundColor(.accentColor)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.accentColor.opacity(0.1))
+                    .cornerRadius(8)
+            }
             
             TextField("프로젝트 이름", text: $projectName)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding(.horizontal)
             
-            Button(action: {
-                goNext = true
-            }) {
-                Text("다음")
+            VStack(spacing: 12) {
+                NavigationLink(destination: PerfumePreferenceSurveyView(
+                    projectName: projectName
+                )) {
+                    HStack {
+                        Image(systemName: selectedModel.icon)
+                        Text("일반 추천으로 시작하기")
+                            .bold()
+                    }
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(projectName.isEmpty ? Color.gray : Color.accentColor)
                     .cornerRadius(10)
-            }
-            .padding(.horizontal)
-            .disabled(projectName.isEmpty)
-            
-            NavigationLink(destination: SurveyView(), isActive: $goNext) {
-                EmptyView()
+                }
+                .padding(.horizontal)
+                .disabled(projectName.isEmpty)
+                
+                Text(selectedModel.description)
+                    .font(.caption)
+                    .foregroundColor(.gray)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
         }
         .padding()
+        .navigationTitle("새 프로젝트")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }

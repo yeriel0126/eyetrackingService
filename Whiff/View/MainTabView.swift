@@ -1,22 +1,27 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @State private var selectedTab = 0
+    
     var body: some View {
-        TabView {
+        TabView(selection: $selectedTab) {
             HomeView()
                 .tabItem {
-                    Label("Home", systemImage: "house.fill")
+                    Label("홈", systemImage: "house.fill")
                 }
+                .tag(0)
 
-            CollectionView()
+            ScentDiaryView(selectedTab: $selectedTab)
                 .tabItem {
-                    Label("Collection", systemImage: "archivebox.fill")
+                    Label("시향 일기", systemImage: "book.fill")
                 }
+                .tag(1)
 
-            RecommendationsTabView()
+            ProfileView()
                 .tabItem {
-                    Label("Recommend", systemImage: "sparkles")
+                    Label("프로필", systemImage: "person.fill")
                 }
+                .tag(2)
         }
     }
 } 

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ImpressionSelectionView: View {
-    @Binding var selectedImpression: String?
+    @Binding var selectedImpressions: Set<String>
     var onNext: () -> Void
     var onBack: () -> Void
 
@@ -15,10 +15,12 @@ struct ImpressionSelectionView: View {
     ]
 
     var body: some View {
-        SelectionGridView(
+        MultipleSelectionGridView(
             options: impressions,
-            selectedOption: $selectedImpression,
+            selectedOptions: $selectedImpressions,
             title: "어떤 인상을 주고 싶으신가요?",
+            subtitle: "2가지 매력을 선택해주세요\n선택하신 조합은 AI가 최적화해드립니다",
+            requiredCount: 2,
             onNext: onNext,
             onBack: onBack
         )

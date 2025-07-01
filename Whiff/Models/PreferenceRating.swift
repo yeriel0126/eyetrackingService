@@ -28,6 +28,31 @@ struct Project: Codable, Identifiable {
     let updatedAt: Date
     let tags: [String]
     
+    init(id: UUID, name: String, recommendations: [Perfume], emotionSummary: String, createdDate: Date, userPreferences: PerfumePreferences?, userNoteRatings: [String: Int]) {
+        self.id = id.uuidString
+        self.name = name
+        self.userId = "current_user" // TODO: 실제 사용자 ID로 변경
+        self.preferences = [] // 노트 평가를 PreferenceRating으로 변환할 수도 있음
+        self.recommendations = recommendations
+        self.createdAt = createdDate
+        self.updatedAt = createdDate
+        
+        // 태그 생성 (감정 분석 요약과 사용자 선호도 기반)
+        var generatedTags: [String] = []
+        
+        if let prefs = userPreferences {
+            generatedTags.append(prefs.gender)
+            generatedTags.append(prefs.seasonTags)
+            generatedTags.append(prefs.timeTags)
+        }
+        
+        // 높게 평가한 노트들을 태그로 추가
+        let likedNotes = userNoteRatings.filter { $0.value >= 4 }.keys
+        generatedTags.append(contentsOf: likedNotes.prefix(3))
+        
+        self.tags = generatedTags
+    }
+    
     enum CodingKeys: String, CodingKey {
         case id
         case name

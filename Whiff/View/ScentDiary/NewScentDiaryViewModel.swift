@@ -12,6 +12,10 @@ class NewScentDiaryViewModel: ObservableObject {
     @Published var error: Error?
     @Published var isLoading = false
     
+    // 감정 태그 관련 상태
+    @Published var suggestedTags: [EmotionTag] = []
+    @Published var selectedTags: Set<String> = []
+    
     private let apiClient = APIClient.shared
     
     func addTag() {
@@ -26,33 +30,52 @@ class NewScentDiaryViewModel: ObservableObject {
         tags.removeAll { $0 == tag }
     }
     
-    func saveDiary() async throws {
+    func saveDiary(viewModel: ScentDiaryViewModel) async throws {
         guard !content.isEmpty else {
             throw DiaryError.emptyContent
         }
         
-        guard let perfume = selectedPerfume else {
-            throw DiaryError.noPerfumeSelected
-        }
+        // 향수 이름이 직접 입력되지 않은 경우 처리
+        let perfumeName = selectedPerfume?.name ?? "직접 입력한 향수"
         
         isLoading = true
         error = nil
         
         do {
-            let diary = ScentDiaryModel(
-                id: UUID().uuidString,
-                userId: UserDefaults.standard.string(forKey: "userId") ?? "",
-                userName: UserDefaults.standard.string(forKey: "userName") ?? "사용자",
-                perfumeId: perfume.id,
-                perfumeName: perfume.name,
-                brand: perfume.brand,
+            // 선택된 감정 태그들을 일반 태그로 변환
+            let emotionTags = suggestedTags
+                .filter { selectedTags.contains($0.id) }
+                .map { $0.name }
+            
+            // 기존 태그와 감정 태그를 합침
+            let allTags = Array(Set(tags + emotionTags))
+            
+            let userId = UserDefaults.standard.string(forKey: "currentUserId") ?? 
+                        UserDefaults.standard.string(forKey: "userId") ?? ""
+            
+            // 디버깅 정보 출력
+            print("🔍 [NewScentDiaryViewModel] 일기 저장 요청:")
+            print("   - 사용자 ID: '\(userId)'")
+            print("   - 향수명: '\(perfumeName)'")
+            print("   - 내용: '\(content)'")
+            print("   - 태그: \(allTags)")
+            print("   - 공개 설정: \(isPublic)")
+            print("   - 이미지 있음: \(selectedImage != nil)")
+            
+            // ScentDiaryViewModel의 새로운 createDiary 메서드 사용
+            let success = await viewModel.createDiary(
+                userId: userId,
+                perfumeName: perfumeName,
                 content: content,
-                tags: tags,
-                createdAt: Date(),
-                updatedAt: Date()
+                isPublic: isPublic,
+                emotionTags: allTags,
+                selectedImage: selectedImage
             )
             
-            try await apiClient.createDiary(diary: diary)
+            if !success {
+                throw DiaryError.saveFailed
+            }
+            
         } catch {
             self.error = error
             throw error

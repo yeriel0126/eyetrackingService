@@ -11,4 +11,4 @@ struct PerfumeNotes: Codable {
     let middle: [String]
     let base: [String]
 }
-
+    

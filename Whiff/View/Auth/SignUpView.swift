@@ -56,10 +56,31 @@ struct SignUpView: View {
             .disabled(authViewModel.isLoading || !isFormValid)
             
             if let error = authViewModel.error {
-                Text(error.localizedDescription)
-                    .foregroundColor(.red)
-                    .font(.caption)
-                    .padding(.top, 8)
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: error.localizedDescription.contains("서버") ? "network.slash" : "exclamationmark.triangle")
+                            .foregroundColor(.red)
+                        Text(error.localizedDescription)
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        Spacer()
+                    }
+                    
+                    if error.localizedDescription.contains("502") || error.localizedDescription.contains("일시적") {
+                        HStack {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .foregroundColor(.orange)
+                            Text("서버가 잠시 후 복구될 예정입니다")
+                                .foregroundColor(.orange)
+                                .font(.caption2)
+                            Spacer()
+                        }
+                    }
+                }
+                .padding(12)
+                .background(Color.red.opacity(0.1))
+                .cornerRadius(8)
+                .padding(.horizontal)
             }
             
             Spacer()
@@ -80,6 +101,8 @@ struct SignUpView: View {
         !password.isEmpty &&
         !name.isEmpty &&
         password == confirmPassword &&
-        password.count >= 6
+        password.count >= 6 &&
+        email.contains("@") &&
+        email.contains(".")
     }
 } 
