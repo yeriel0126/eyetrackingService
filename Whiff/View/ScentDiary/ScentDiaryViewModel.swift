@@ -614,6 +614,45 @@ class ScentDiaryViewModel: ObservableObject {
         return mockDiaries
     }
     
+    // MARK: - 미연동 diaries 엔드포인트 래퍼
+    func uploadDiaryImage(diaryId: String, image: UIImage) async throws -> String {
+        let response = try await apiClient.uploadDiaryImage(diaryId: diaryId, image: image)
+        return response.image_url
+    }
+    func getDiaryStatsSummary() async throws -> DiaryStatsSummaryResponse {
+        return try await apiClient.getDiaryStatsSummary()
+    }
+    func searchDiaries(query: String) async throws -> [ScentDiaryModel] {
+        return try await apiClient.searchDiaries(query: query)
+    }
+    func getAllDiariesAdmin() async throws -> [ScentDiaryModel] {
+        return try await apiClient.getAllDiariesAdmin()
+    }
+    func cleanupDiariesAdmin() async throws -> String {
+        let response = try await apiClient.cleanupDiariesAdmin()
+        return response.message
+    }
+    func getDiariesHealth() async throws -> DiaryHealthResponse {
+        return try await apiClient.getDiariesHealth()
+    }
+    
+    // MARK: - 신고 관리 엔드포인트 래퍼
+    func reportDiary(diaryId: String, reason: String) async throws -> ReportResponse {
+        return try await apiClient.reportDiary(diaryId: diaryId, reason: reason)
+    }
+    func getReports() async throws -> [ReportModel] {
+        return try await apiClient.getReports()
+    }
+    func getReportStats() async throws -> ReportStatsResponse {
+        return try await apiClient.getReportStats()
+    }
+    func handleReportAction(reportId: String, action: String) async throws -> ReportActionResponse {
+        return try await apiClient.handleReportAction(reportId: reportId, action: action)
+    }
+    func deleteReport(reportId: String) async throws -> DeleteReportResponse {
+        return try await apiClient.deleteReport(reportId: reportId)
+    }
+    
     // MARK: - 기존 메서드 (하위 호환성)
     
     /// 기존 createDiary 메서드 (하위 호환성)

@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 enum APIError: Error, LocalizedError {
     case invalidURL
@@ -202,6 +203,12 @@ class APIClient {
         return try await request("/auth/google-login", method: "POST", body: data)
     }
     
+    func appleLogin(idToken: String) async throws -> AuthResponse {
+        let body = ["id_token": idToken]
+        let data = try JSONEncoder().encode(body)
+        return try await request("/auth/apple-login", method: "POST", body: data)
+    }
+    
     func logout() async throws -> LogoutResponse {
         return try await request("/auth/logout", method: "POST")
     }
@@ -355,6 +362,11 @@ class APIClient {
         let body = try JSONEncoder().encode(recommendation)
         return try await request("/recommendations/save", method: "POST", body: body)
     }
+    
+    // 추천 전체 삭제 API
+    func clearMyRecommendations() async throws -> ClearRecommendationsResponse {
+        return try await request("/recommendations/clear-my-recommendations", method: "DELETE")
+    }
 
     // MARK: - Emotion Analysis API (외부 API)
     func getEmotionTags(from text: String) async throws -> [EmotionTag] {
@@ -457,6 +469,72 @@ class APIClient {
         default:
             throw APIError.serverError("알 수 없는 오류가 발생했습니다.")
         }
+    }
+    
+    // 일기 이미지 업로드
+    func uploadDiaryImage(diaryId: String, image: UIImage) async throws -> DiaryImageUploadResponse {
+        let url = URL(string: baseURL + "/diaries/\(diaryId)/image")!
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        let boundary = UUID().uuidString
+        urlRequest.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        guard let imageData = image.jpegData(compressionQuality: 0.8) else {
+            throw APIError.invalidInput("이미지 인코딩 실패")
+        }
+        var body = Data()
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"image\"; filename=\"diary_image.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        urlRequest.httpBody = body
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            throw APIError.serverError("이미지 업로드 실패")
+        }
+        return try JSONDecoder().decode(DiaryImageUploadResponse.self, from: data)
+    }
+    // 일기 통계 요약
+    func getDiaryStatsSummary() async throws -> DiaryStatsSummaryResponse {
+        return try await request("/diaries/stats/summary")
+    }
+    // 일기 검색
+    func searchDiaries(query: String) async throws -> [ScentDiaryModel] {
+        let encoded = query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        return try await request("/diaries/search?q=\(encoded)")
+    }
+    // 관리자 전체 일기
+    func getAllDiariesAdmin() async throws -> [ScentDiaryModel] {
+        return try await request("/diaries/admin/all")
+    }
+    // 관리자 데이터 정리
+    func cleanupDiariesAdmin() async throws -> CleanupResponse {
+        return try await request("/diaries/admin/cleanup", method: "DELETE")
+    }
+    // 일기 모듈 상태
+    func getDiariesHealth() async throws -> DiaryHealthResponse {
+        return try await request("/diaries/health")
+    }
+    
+    // 신고 관리 APIs
+    func reportDiary(diaryId: String, reason: String) async throws -> ReportResponse {
+        let body = ["diary_id": diaryId, "reason": reason]
+        let data = try JSONEncoder().encode(body)
+        return try await request("/reports/diary", method: "POST", body: data)
+    }
+    func getReports() async throws -> [ReportModel] {
+        return try await request("/reports/")
+    }
+    func getReportStats() async throws -> ReportStatsResponse {
+        return try await request("/reports/stats")
+    }
+    func handleReportAction(reportId: String, action: String) async throws -> ReportActionResponse {
+        let body = ["action": action]
+        let data = try JSONEncoder().encode(body)
+        return try await request("/reports/\(reportId)/action", method: "PUT", body: data)
+    }
+    func deleteReport(reportId: String) async throws -> DeleteReportResponse {
+        return try await request("/reports/\(reportId)", method: "DELETE")
     }
 }
 
@@ -1287,10 +1365,57 @@ struct RecommendationSaveResponse: Codable {
     let recommendation_id: String
 }
 
+// 추천 전체 삭제 응답
+struct ClearRecommendationsResponse: Codable {
+    let message: String
+}
+
+// 신고 관련 Response/Model
+struct ReportResponse: Codable {
+    let message: String
+    let report_id: String?
+}
+struct ReportModel: Codable {
+    let id: String
+    let diary_id: String
+    let reporter_id: String
+    let reason: String
+    let status: String
+    let created_at: String
+}
+struct ReportStatsResponse: Codable {
+    let total: Int
+    let pending: Int
+    let resolved: Int
+}
+struct ReportActionResponse: Codable {
+    let message: String
+    let status: String
+}
+struct DeleteReportResponse: Codable {
+    let message: String
+}
+
 // 기존 모델들 (호환성 유지)
 struct FirebaseUser: Codable {
     let uid: String
     let email: String
     let name: String?
     let profile_image: String?
+} 
+
+struct DiaryImageUploadResponse: Codable {
+    let image_url: String
+}
+struct DiaryStatsSummaryResponse: Codable {
+    let total: Int
+    let publicCount: Int
+    let privateCount: Int
+}
+struct CleanupResponse: Codable {
+    let message: String
+}
+struct DiaryHealthResponse: Codable {
+    let status: String
+    let details: String?
 } 

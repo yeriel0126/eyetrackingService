@@ -264,10 +264,18 @@ class ProjectStore: ObservableObject {
     
     // 추천 결과 초기화
     func clearRecommendations() {
-        projects.removeAll()
-        recommendations.removeAll()
-        saveProjects()
-        print("🧹 [전체 삭제] 모든 추천 기록이 삭제되었습니다")
+        Task {
+            do {
+                _ = try await apiClient.clearMyRecommendations()
+                print("✅ [백엔드 전체 삭제] 모든 추천 기록이 서버에서 삭제되었습니다")
+            } catch {
+                print("❌ [백엔드 전체 삭제 실패] \(error)")
+            }
+            projects.removeAll()
+            recommendations.removeAll()
+            saveProjects()
+            print("🧹 [전체 삭제] 모든 추천 기록이 삭제되었습니다")
+        }
     }
     
     // 새로운 모델 사용 가능 여부 확인

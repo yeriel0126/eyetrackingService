@@ -287,6 +287,8 @@ class AuthViewModel: ObservableObject {
             try Auth.auth().signOut()
             // Google 로그아웃
             GIDSignIn.sharedInstance.signOut()
+            // Apple 사용자 정보 삭제
+            AppleSignInUtils.clearAppleUserInfo()
             // 토큰 및 사용자 정보 삭제
             UserDefaults.standard.removeObject(forKey: "authToken")
             UserDefaults.standard.removeObject(forKey: "userId")
@@ -306,46 +308,94 @@ class AuthViewModel: ObservableObject {
     func signInWithApple(result: Result<ASAuthorization, Error>) async {
         isLoading = true
         error = nil
+        
+        print("🍎 Apple 로그인 시작")
+        
         do {
             let authorization = try result.get()
             guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
                   let identityToken = appleIDCredential.identityToken,
                   let tokenString = String(data: identityToken, encoding: .utf8) else {
+                print("❌ Apple 인증 토큰을 가져올 수 없음")
                 self.error = APIError.invalidInput("Apple 인증 토큰을 가져올 수 없습니다.")
                 isLoading = false
                 return
             }
-            // Firebase 인증
-            let credential = OAuthProvider.credential(withProviderID: "apple.com", idToken: tokenString, rawNonce: "")
+            
+            print("✅ Apple ID 토큰 획득")
+            
+            // 사용자 이름 처리 (첫 로그인시에만 제공됨)
+            var userName = "사용자"
+            if let fullName = appleIDCredential.fullName {
+                let formatter = PersonNameComponentsFormatter()
+                formatter.style = .long
+                userName = formatter.string(from: fullName)
+                print("🍎 사용자 이름: \(userName)")
+                
+                // Apple 사용자 정보 저장
+                AppleSignInUtils.saveAppleUserInfo(
+                    userID: appleIDCredential.user,
+                    fullName: fullName,
+                    email: appleIDCredential.email
+                )
+            }
+            
+            // Firebase 인증 (nonce 없이 진행 - 개발 단계)
+            let credential = OAuthProvider.credential(withProviderID: "apple.com", 
+                                                    idToken: tokenString, 
+                                                    rawNonce: "")
+            
+            print("🔵 Firebase Apple 인증 시도")
             let authResult = try await Auth.auth().signIn(with: credential)
+            print("✅ Firebase Apple 인증 성공")
+            
+            // Firebase ID 토큰 저장
             let firebaseIdToken = try await authResult.user.getIDToken()
             UserDefaults.standard.set(firebaseIdToken, forKey: "authToken")
+            print("✅ Firebase ID 토큰 저장 완료")
+            
             // 백엔드에 Apple 로그인 요청
-            let url = URL(string: "https://whiff-api-9nd8.onrender.com/auth/apple-login")!
-            var request = URLRequest(url: url)
-            request.httpMethod = "POST"
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            let body: [String: Any] = ["id_token": tokenString]
-            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
-            let (data, response) = try await URLSession.shared.data(for: request)
-            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-                let msg = String(data: data, encoding: .utf8) ?? "Apple 로그인 실패"
-                self.error = APIError.serverError(msg)
-                isLoading = false
-                return
-            }
+            print("🔵 백엔드 Apple 로그인 요청")
+            let _ = try await apiClient.appleLogin(idToken: tokenString)
+            print("✅ 백엔드 Apple 로그인 성공")
+            
             // 사용자 정보 가져오기
+            print("🔵 사용자 정보 가져오기")
             let user = try await apiClient.getCurrentUser()
             self.user = user
             self.isAuthenticated = true
+            
+            // 사용자 정보를 UserDefaults에 저장
             UserDefaults.standard.set(user.data.uid, forKey: "userId")
-            UserDefaults.standard.set(user.data.name ?? "사용자", forKey: "userName")
+            UserDefaults.standard.set(user.data.name ?? userName, forKey: "userName")
+            // 시향 일기용 키도 추가로 저장
             UserDefaults.standard.set(user.data.uid, forKey: "currentUserId")
-            UserDefaults.standard.set(user.data.name ?? "사용자", forKey: "currentUserName")
+            UserDefaults.standard.set(user.data.name ?? userName, forKey: "currentUserName")
             UserDefaults.standard.set(user.data.picture ?? "", forKey: "currentUserProfileImage")
+            
+            print("✅ Apple 로그인 완료: \(user.data.name ?? userName)")
+            
+        } catch let error as APIError {
+            print("❌ Apple 로그인 API 에러: \(error.localizedDescription)")
+            
+            // 502 에러의 경우 더 친화적인 메시지 제공
+            if error.localizedDescription.contains("502") {
+                self.error = APIError.serverError("현재 서버가 일시적으로 응답하지 않습니다. 잠시 후 다시 시도해주세요.")
+            } else {
+                self.error = error
+            }
+            
+            // 502 에러가 아닌 경우에만 토큰 삭제
+            if !error.localizedDescription.contains("502") {
+                UserDefaults.standard.removeObject(forKey: "authToken")
+            }
         } catch {
+            print("❌ Apple 로그인 에러: \(error.localizedDescription)")
             self.error = APIError.serverError("Apple 로그인 중 오류가 발생했습니다: \(error.localizedDescription)")
+            // 인증 실패 시 토큰 삭제
+            UserDefaults.standard.removeObject(forKey: "authToken")
         }
+        
         isLoading = false
     }
 } 
