@@ -36,23 +36,9 @@
 		644DB19A2DDC402A00170327 /* WhiffUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WhiffUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		6427D6132DE2F12300080B83 /* Exceptions for "Whiff" folder in "Whiff" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				App/WhiffApp.swift,
-				Info.plist,
-			);
-			target = 644DB1822DDC402900170327 /* Whiff */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		644DB1852DDC402900170327 /* Whiff */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				6427D6132DE2F12300080B83 /* Exceptions for "Whiff" folder in "Whiff" target */,
-			);
 			path = Whiff;
 			sourceTree = "<group>";
 		};
@@ -426,9 +412,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Whiff.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9V5WGY4P68;
+				DEVELOPMENT_TEAM = 8BJS54K55Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Whiff/Info.plist;
@@ -442,7 +429,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.sinhuiyeong.whiffapp;
+				PRODUCT_BUNDLE_IDENTIFIER = com.whiff.main;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -455,9 +442,10 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Whiff.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9V5WGY4P68;
+				DEVELOPMENT_TEAM = 8BJS54K55Z;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Whiff/Info.plist;
