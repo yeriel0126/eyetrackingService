@@ -54,12 +54,15 @@ struct LoginView: View {
                 Text("또는")
                     .foregroundColor(.gray)
                 
-                GoogleSignInButton(scheme: .dark, style: .wide, state: .normal) {
-                    Task {
-                        await authViewModel.signInWithGoogle()
+                // Google Sign In 버튼 (설정에 따라 표시/숨김)
+                if GoogleSignInConfig.isEnabled {
+                    GoogleSignInButton(scheme: .dark, style: .wide, state: .normal) {
+                        Task {
+                            await authViewModel.signInWithGoogle()
+                        }
                     }
+                    .frame(width: 280, height: 50)
                 }
-                .frame(width: 280, height: 50)
                 
                 // Apple Sign In 버튼 (설정에 따라 표시/숨김)
                 if AppleSignInConfig.isEnabled {

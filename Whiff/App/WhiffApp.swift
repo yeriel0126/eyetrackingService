@@ -30,6 +30,10 @@ struct WhiffApp: App {
         AppleSignInConfig.validateConfig()
         AppleSignInConfig.printConfig()
         
+        // Google 로그인 설정 검증
+        GoogleSignInConfig.validateConfig()
+        GoogleSignInConfig.printConfig()
+        
         // Apple 로그인 디버그 정보 출력
         AppleSignInUtils.printAppleSignInDebugInfo()
         AppleSignInKeyManager.printKeyFileInfo()

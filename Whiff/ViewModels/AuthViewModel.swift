@@ -133,6 +133,13 @@ class AuthViewModel: ObservableObject {
     }
     
     func signInWithGoogle() async {
+        // Google Sign In이 비활성화된 경우 처리하지 않음
+        guard GoogleSignInConfig.isEnabled else {
+            print("🔵 Google Sign In이 비활성화되어 있습니다.")
+            self.error = APIError.serverError("Google 로그인이 현재 비활성화되어 있습니다.")
+            return
+        }
+        
         isLoading = true
         error = nil
         
