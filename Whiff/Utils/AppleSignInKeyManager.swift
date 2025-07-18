@@ -67,11 +67,11 @@ struct AppleSignInConfig {
     static let keyID = "YOUR_KEY_ID_HERE"
     
     /// 앱의 Bundle ID
-    static let bundleID = "com.sinhuiyeong.whiffapp"
+    static let bundleID = "com.whiff.main"
     
     /// Apple Developer Service ID
     /// 일반적으로 Bundle ID + .signin 형태
-    static let serviceID = "com.sinhuiyeong.whiffapp.signin"
+    static let serviceID = "com.whiff.main.signin"
     
     // MARK: - Firebase 정보
     /// Firebase 프로젝트 ID

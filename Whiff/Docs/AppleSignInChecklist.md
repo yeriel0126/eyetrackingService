@@ -6,13 +6,13 @@
 - [ ] **Team ID**: `ABC123DEF4` (10자리 영숫자)
 - [ ] **Key ID**: `XYZ789ABC1` (10자리 영숫자)
 - [ ] **Private Key 파일**: `AuthKey_XYZ789ABC1.p8`
-- [ ] **Bundle ID**: `com.sinhuiyeong.whiffapp`
+- [ ] **Bundle ID**: `com.whiff.main`
 - [ ] **App ID**: Apple Developer Console에서 생성한 App ID
 
 ### 2. Firebase Console 설정 정보
 - [ ] **Firebase 프로젝트 ID**: `whiff-1cd2b`
 - [ ] **Firebase Web API Key**: `AIzaSyBuyRbKSrmdJRCmbFH43NcExWVSzqSVwMI`
-- [ ] **Service ID**: `com.sinhuiyeong.whiffapp.signin`
+- [ ] **Service ID**: `com.whiff.main.signin`
 - [ ] **Apple Team ID**: 위의 Team ID와 동일
 - [ ] **Key ID**: 위의 Key ID와 동일
 - [ ] **Private Key 내용**: `.p8` 파일의 전체 내용

@@ -16,7 +16,7 @@
 
 #### 1.2 확인사항
 - [ ] Sign In with Apple capability가 추가됨
-- [ ] Bundle Identifier가 올바름: `com.sinhuiyeong.whiffapp`
+- [ ] Bundle Identifier가 올바름: `com.whiff.main`
 - [ ] Team이 올바르게 설정됨
 
 ### 2. Apple Developer Console 설정 확인
@@ -29,7 +29,7 @@
 
 #### 2.2 Bundle ID 확인
 - Apple Developer Console의 App ID와 Xcode의 Bundle ID가 일치해야 함
-- 현재 Bundle ID: `com.sinhuiyeong.whiffapp`
+- 현재 Bundle ID: `com.whiff.main`
 
 ### 3. Firebase Console 설정 확인
 
@@ -39,7 +39,7 @@
 3. **Apple** provider가 활성화되어 있는지 확인
 
 #### 3.2 Apple 설정 정보
-- Service ID: `com.sinhuiyeong.whiffapp.signin`
+- Service ID: `com.whiff.main.signin`
 - Apple Team ID: (Apple Developer Console에서 확인)
 - Key ID: (Apple Developer Console에서 확인)
 - Private Key: (Apple Developer Console에서 다운로드한 .p8 파일 내용)
@@ -65,8 +65,8 @@
 🍎 === Apple Sign In 설정 정보 ===
 🍎 Team ID: YOUR_TEAM_ID_HERE
 🍎 Key ID: YOUR_KEY_ID_HERE
-🍎 Bundle ID: com.sinhuiyeong.whiffapp
-🍎 Service ID: com.sinhuiyeong.whiffapp.signin
+🍎 Bundle ID: com.whiff.main
+🍎 Service ID: com.whiff.main.signin
 🍎 Key File: AuthKey_YOUR_KEY_ID_HERE.p8
 🍎 설정 완료: ❌
 🍎 ================================

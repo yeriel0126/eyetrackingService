@@ -31,7 +31,7 @@ Capability 목록에서 다음 카테고리들을 확인:
 ### 해결 방법
 1. Xcode에서 프로젝트 선택
 2. **Signing & Capabilities** 탭
-3. **Bundle Identifier**를 `com.sinhuiyeong.whiffapp`로 통일
+3. **Bundle Identifier**를 `com.whiff.main`로 통일
 4. **Team** 설정 확인
 
 ## 🔧 수동으로 추가하는 방법
@@ -47,7 +47,7 @@ Capability 목록에서 다음 카테고리들을 확인:
         <string>AppleSignIn</string>
         <key>CFBundleURLSchemes</key>
         <array>
-            <string>com.sinhuiyeong.whiffapp</string>
+            			<string>com.whiff.main</string>
         </array>
     </dict>
 </array>
@@ -78,13 +78,13 @@ Capability 목록에서 다음 카테고리들을 확인:
 ## 📋 체크리스트
 
 ### Xcode 설정
-- [ ] Bundle Identifier 통일: `com.sinhuiyeong.whiffapp`
+- [ ] Bundle Identifier 통일: `com.whiff.main`
 - [ ] Team 설정 완료
 - [ ] Sign In with Apple Capability 추가
 - [ ] Entitlements 파일 생성 (필요시)
 
 ### Apple Developer Console
-- [ ] App ID: `com.sinhuiyeong.whiffapp` 생성
+- [ ] App ID: `com.whiff.main` 생성
 - [ ] Sign In with Apple capability 활성화
 - [ ] Bundle ID 일치 확인
 

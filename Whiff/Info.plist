@@ -9,8 +9,8 @@
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
-			<key>CFBundleURLName</key>
-			<string>com.sinhuiyeong.whiffapp</string>
+					<key>CFBundleURLName</key>
+		<string>com.whiff.main</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.494222107612-4inferv7ml6hoa1mvam1n00463tng972</string>
@@ -21,10 +21,10 @@
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
 			<string>AppleSignIn</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>com.sinhuiyeong.whiffapp</string>
-			</array>
+					<key>CFBundleURLSchemes</key>
+		<array>
+			<string>com.whiff.main</string>
+		</array>
 		</dict>
 	</array>
 	<key>GIDClientID</key>
