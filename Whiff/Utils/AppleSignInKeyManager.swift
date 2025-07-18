@@ -60,11 +60,11 @@ struct AppleSignInConfig {
     // MARK: - Apple Developer Console 정보
     /// Apple Developer Team ID (10자리 영숫자)
     /// 예: ABC123DEF4
-    static let teamID = "YOUR_TEAM_ID_HERE"
+    static let teamID = "8BJS54K55Z"
     
     /// Apple Developer Key ID (10자리 영숫자)
     /// 예: XYZ789ABC1
-    static let keyID = "YOUR_KEY_ID_HERE"
+    static let keyID = "43ZM224LTP"
     
     /// 앱의 Bundle ID
     static let bundleID = "com.whiff.main"
@@ -83,14 +83,14 @@ struct AppleSignInConfig {
     // MARK: - 키 파일 정보
     /// Private Key 파일명 (실제 파일명으로 변경)
     /// 예: AuthKey_XYZ789ABC1.p8
-    static let keyFileName = "AuthKey_YOUR_KEY_ID_HERE.p8"
+    static let keyFileName = "AuthKey_43ZM224LTP.p8"
     
     // MARK: - 설정 검증
     /// 모든 필수 정보가 입력되었는지 확인
     static var isConfigured: Bool {
-        return teamID != "YOUR_TEAM_ID_HERE" &&
-               keyID != "YOUR_KEY_ID_HERE" &&
-               keyFileName != "AuthKey_YOUR_KEY_ID_HERE.p8"
+        return teamID == "8BJS54K55Z" &&
+               keyID == "43ZM224LTP" &&
+               keyFileName == "AuthKey_43ZM224LTP.p8"
     }
     
     /// 설정 정보 출력
