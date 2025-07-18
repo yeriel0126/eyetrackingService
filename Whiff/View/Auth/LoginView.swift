@@ -61,19 +61,22 @@ struct LoginView: View {
                 }
                 .frame(width: 280, height: 50)
                 
-                SignInWithAppleButton(
-                    .signIn,
-                    onRequest: { request in
-                        request.requestedScopes = [.fullName, .email]
-                    },
-                    onCompletion: { result in
-                        Task {
-                            await authViewModel.signInWithApple(result: result)
+                // Apple Sign In 버튼 (설정에 따라 표시/숨김)
+                if AppleSignInConfig.isEnabled {
+                    SignInWithAppleButton(
+                        .signIn,
+                        onRequest: { request in
+                            request.requestedScopes = [.fullName, .email]
+                        },
+                        onCompletion: { result in
+                            Task {
+                                await authViewModel.signInWithApple(result: result)
+                            }
                         }
-                    }
-                )
-                .signInWithAppleButtonStyle(.black)
-                .frame(width: 280, height: 50)
+                    )
+                    .signInWithAppleButtonStyle(.black)
+                    .frame(width: 280, height: 50)
+                }
                 
                 Button("계정이 없으신가요? 회원가입") {
                     showSignUp = true

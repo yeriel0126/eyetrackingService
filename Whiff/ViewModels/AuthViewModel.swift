@@ -306,6 +306,13 @@ class AuthViewModel: ObservableObject {
     }
     
     func signInWithApple(result: Result<ASAuthorization, Error>) async {
+        // Apple Sign In이 비활성화된 경우 처리하지 않음
+        guard AppleSignInConfig.isEnabled else {
+            print("🍎 Apple Sign In이 비활성화되어 있습니다.")
+            self.error = APIError.serverError("Apple 로그인이 현재 비활성화되어 있습니다.")
+            return
+        }
+        
         isLoading = true
         error = nil
         
